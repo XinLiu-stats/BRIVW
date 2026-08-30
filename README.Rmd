@@ -27,29 +27,19 @@ The `brivw()` function requires four vectors of GWAS summary statistics:
 - `Gamma_hat`: SNP-outcome association estimates;
 - `Gamma_se`: standard errors of the SNP-outcome associations.
 
-The standard errors supplied to `brivw()` must already be calibrated for
-sample structure using LDSC. Specifically,
+The standard errors should be calibrated as
 
-\[
-\mathrm{gamma\_se}
-=
-\sqrt{c_1}\,\mathrm{SE}_{X,\mathrm{raw}},
-\]
+`gamma_se` $= \sqrt{c_1}\,\mathrm{SE}_{X,\mathrm{raw}}$
 
 and
 
-\[
-\mathrm{Gamma\_se}
-=
-\sqrt{c_2}\,\mathrm{SE}_{Y,\mathrm{raw}}.
-\]
+`Gamma_se` $= \sqrt{c_2}\,\mathrm{SE}_{Y,\mathrm{raw}}$.
 
 The correlation parameter is
 
-\[
-\rho =
-\frac{c_{12}}{\sqrt{c_1c_2}}.
-\]
+$$
+\rho = \frac{c_{12}}{\sqrt{c_1 c_2}}.
+$$
 
 The input SNPs are assumed to have already undergone allele harmonization,
 randomized instrument selection, and LD pruning.
