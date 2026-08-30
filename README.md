@@ -39,7 +39,8 @@ $$
 $$
 
 The input SNPs are assumed to have already undergone allele
-harmonization, randomized instrument selection, and LD pruning.
+harmonization, randomized instrument selection, and revised sigma-based
+pruning procedure.
 
 ## Example: BMI and systolic blood pressure
 
