@@ -1,11 +1,8 @@
----
-output: github_document
----
 
 # BRIVW
 
 The **BRIVW** R package implements the bivariate rerandomized inverse
-variance weighted estimator for Mendelian randomization with winner's
+variance weighted estimator for Mendelian randomization with winner’s
 curse and sample structure, together with the accompanying BMEI-C test
 for detecting directional pleiotropy.
 
@@ -13,7 +10,7 @@ for detecting directional pleiotropy.
 
 The development version of BRIVW can be installed from GitHub with:
 
-```r
+``` r
 # install.packages("remotes")
 remotes::install_github("XinLiu-stats/BRIVW")
 ```
@@ -30,36 +27,36 @@ The `brivw()` function requires four vectors of GWAS summary statistics:
 The standard errors supplied to `brivw()` must already be calibrated for
 sample structure using LDSC. Specifically,
 
-\[
+$$
 \mathrm{gamma\_se}
 =
 \sqrt{c_1}\,\mathrm{SE}_{X,\mathrm{raw}},
-\]
+$$
 
 and
 
-\[
+$$
 \mathrm{Gamma\_se}
 =
 \sqrt{c_2}\,\mathrm{SE}_{Y,\mathrm{raw}}.
-\]
+$$
 
 The correlation parameter is
 
-\[
+$$
 \rho =
 \frac{c_{12}}{\sqrt{c_1c_2}}.
-\]
+$$
 
-The input SNPs are assumed to have already undergone allele harmonization,
-randomized instrument selection, and LD pruning.
+The input SNPs are assumed to have already undergone allele
+harmonization, randomized instrument selection, and LD pruning.
 
 ## Example: BMI and systolic blood pressure
 
 The package includes an analysis-ready example dataset for Mendelian
 randomization of body mass index on systolic blood pressure.
 
-```r
+``` r
 library(BRIVW)
 
 data("BMI_UKB_SBP")
@@ -68,7 +65,7 @@ data("BMI_UKB_SBP_C")
 
 The LDSC-based correlation parameter is calculated as:
 
-```r
+``` r
 rho <- BMI_UKB_SBP_C[1, 2] /
   sqrt(
     BMI_UKB_SBP_C[1, 1] *
@@ -80,7 +77,7 @@ rho
 
 BRIVW estimation and the BMEI-C test are then performed jointly:
 
-```r
+``` r
 fit <- brivw(
   gamma_hat = BMI_UKB_SBP$gamma_hat,
   gamma_se = BMI_UKB_SBP$gamma_se,
@@ -100,6 +97,6 @@ interval, causal-effect P-value, number of SNPs, and BMEI-C P-value.
 
 ## Reference
 
-Liu X, Su Y, Zeng C, et al. Simultaneously accounting for the winner's
+Liu X, Su Y, Zeng C, et al. Simultaneously accounting for the winner’s
 curse and sample structure in Mendelian randomization: bivariate
 rerandomized inverse variance weighted estimator.
