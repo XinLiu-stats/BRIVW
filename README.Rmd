@@ -22,27 +22,35 @@ remotes::install_github("XinLiu-stats/BRIVW")
 
 The `brivw()` function requires four vectors of GWAS summary statistics:
 
-- `gamma_hat`: SNP-exposure association estimates;
-- `gamma_se`: standard errors of the SNP-exposure associations;
-- `Gamma_hat`: SNP-outcome association estimates;
-- `Gamma_se`: standard errors of the SNP-outcome associations.
+- `gamma_hat`: estimated SNP-exposure associations;
+- `gamma_se`: LDSC-calibrated working standard errors for `gamma_hat`;
+- `Gamma_hat`: estimated SNP-outcome associations;
+- `Gamma_se`: LDSC-calibrated working standard errors for `Gamma_hat`.
 
-The standard errors should be calibrated as
+Before calling `brivw()`, the reported GWAS standard errors should be
+calibrated for sample structure using the LDSC intercepts. If
+`se_exposure` and `se_outcome` denote the standard errors reported by
+the exposure and outcome GWASs, respectively, the required inputs are
 
-`gamma_se` $= \sqrt{c_1}\,\mathrm{SE}_{X,\mathrm{raw}}$
+```r
+gamma_se <- sqrt(c1) * se_exposure
+Gamma_se <- sqrt(c2) * se_outcome
+rho <- c12 / sqrt(c1 * c2)
+```
 
-and
+Here, `c1` and `c2` are the single-trait LDSC intercepts for the
+exposure and outcome GWASs, respectively, and `c12` is the cross-trait
+LDSC intercept. Thus, `gamma_se` and `Gamma_se` are the working standard
+errors after LDSC calibration, and `rho` is the corresponding
+sampling-error correlation induced by sample structure.
 
-`Gamma_se` $= \sqrt{c_2}\,\mathrm{SE}_{Y,\mathrm{raw}}$.
-
-The correlation parameter is
-
-$$
-\rho = \frac{c_{12}}{\sqrt{c_1 c_2}}.
-$$
+In the absence of sample structure, `c1 = c2 = 1` and `c12 = 0`, so
+the working standard errors reduce to the reported GWAS standard errors
+and `rho = 0`.
 
 The input SNPs are assumed to have already undergone allele harmonization,
-randomized instrument selection, and revised sigma-based pruning procedure.
+randomized instrument selection, and the revised sigma-based pruning
+procedure.
 
 ## Example: BMI and systolic blood pressure
 
@@ -56,7 +64,13 @@ data("BMI_UKB_SBP")
 data("BMI_UKB_SBP_C")
 ```
 
-The LDSC-based correlation parameter is calculated as:
+`BMI_UKB_SBP` contains the harmonized and selected GWAS summary
+statistics, with standard errors already calibrated using LDSC.
+`BMI_UKB_SBP_C` contains the corresponding LDSC intercept matrix, whose
+diagonal elements are `c1` and `c2` and whose off-diagonal element is
+`c12`.
+
+The sampling-error correlation is calculated as
 
 ```r
 rho <- BMI_UKB_SBP_C[1, 2] /
