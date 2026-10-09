@@ -1,6 +1,6 @@
 Package: BRIVW
 Title: Bivariate Rerandomized Inverse Variance Weighted Mendelian Randomization
-Version: 0.1.0
+Version: 0.2.0
 Authors@R:
     person("Xin", "Liu",
            email = "xinliu_stats@hust.edu.cn",
@@ -8,12 +8,13 @@ Authors@R:
 Description: Implements the bivariate rerandomized inverse variance weighted
     estimator for Mendelian randomization with the winner's curse and sample
     structure, together with the accompanying bivariate modified Egger
-    intercept test for detecting directional pleiotropy.
+    intercept test to assess departures from the balanced pleiotropy and
+    instrument strength independent of direct effect conditions.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-Imports: 
-    mvtnorm
+Imports:
+    stats
 Config/roxygen2/version: 8.1.0
 Depends: 
     R (>= 3.5)

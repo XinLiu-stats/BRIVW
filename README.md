@@ -1,18 +1,18 @@
-
 # BRIVW
 
 The **BRIVW** R package implements the bivariate rerandomized inverse
-variance weighted estimator for Mendelian randomization with winner’s
-curse and sample structure, together with the accompanying BMEI-C test
-for detecting directional pleiotropy.
+variance weighted estimator for Mendelian randomization with winner's
+curse and sample structure. It also provides the BMEI test to assess
+departures from the balanced pleiotropy and InSIDE conditions.
 
 ## Installation
 
-The development version of BRIVW can be installed from GitHub with:
+Install or update BRIVW from GitHub:
 
-``` r
+```r
+# Run once if remotes is not installed:
 # install.packages("remotes")
-remotes::install_github("XinLiu-stats/BRIVW")
+remotes::install_github("XinLiu-stats/BRIVW", force = TRUE, upgrade = "never")
 ```
 
 ## Input data
@@ -20,68 +20,59 @@ remotes::install_github("XinLiu-stats/BRIVW")
 The `brivw()` function requires four vectors of GWAS summary statistics:
 
 - `gamma_hat`: estimated SNP-exposure associations;
-- `gamma_se`: LDSC-calibrated working standard errors for `gamma_hat`;
+- `gamma_se`: LDSC-calibrated standard errors for `gamma_hat`;
 - `Gamma_hat`: estimated SNP-outcome associations;
-- `Gamma_se`: LDSC-calibrated working standard errors for `Gamma_hat`.
+- `Gamma_se`: LDSC-calibrated standard errors for `Gamma_hat`.
 
-Before calling `brivw()`, the reported GWAS standard errors should be
-calibrated for sample structure using the LDSC intercepts. If
-`se_exposure` and `se_outcome` denote the standard errors reported by
-the exposure and outcome GWASs, respectively, the required inputs are
+The input SNPs must already have undergone allele harmonization,
+randomized IV selection, and LD pruning. Supply the same `eta` and
+`lambda` values used for IV selection, without rounding the threshold.
 
-``` r
+If `se_exposure` and `se_outcome` are the original GWAS standard errors,
+calibrate them using the LDSC intercepts before calling `brivw()`:
+
+```r
 gamma_se <- sqrt(c1) * se_exposure
 Gamma_se <- sqrt(c2) * se_outcome
 rho <- c12 / sqrt(c1 * c2)
 ```
 
-Here, `c1` and `c2` are the single-trait LDSC intercepts for the
-exposure and outcome GWASs, respectively, and `c12` is the cross-trait
-LDSC intercept. Thus, `gamma_se` and `Gamma_se` are the working standard
-errors after LDSC calibration, and `rho` is the corresponding
-sampling-error correlation induced by sample structure.
+Here, `c1` and `c2` are the exposure and outcome single-trait LDSC
+intercepts, and `c12` is the cross-trait LDSC intercept. Do not apply this
+calibration again if the supplied standard errors have already been
+calibrated. In the absence of sample structure, use `c1 = c2 = 1` and
+`c12 = 0`, so the original standard errors are retained and `rho = 0`.
 
-In the absence of sample structure, `c1 = c2 = 1` and `c12 = 0`, so the
-working standard errors reduce to the reported GWAS standard errors and
-`rho = 0`.
+## BMEI allele coding
 
-The input SNPs are assumed to have already undergone allele
-harmonization, randomized instrument selection, and the revised
-sigma-based pruning procedure.
+BMEI uses exposure-increasing allele coding (all-positive coding).
+For SNPs with negative input `gamma_hat`, the function reverses both
+`gamma_hat` and `Gamma_hat` before Rao-Blackwellization. This recoding
+is handled automatically and leaves the BRIVW estimate unchanged for
+the same selected SNPs.
+
+The output `bmei_p_value` is the two-sided BMEI P-value from the standard
+normal distribution. In version 0.2.0, this replaces the combined
+BMEI-C P-value; the function arguments and output column names are unchanged.
 
 ## Example: BMI and systolic blood pressure
 
-The package includes an analysis-ready example dataset for Mendelian
-randomization of body mass index on systolic blood pressure.
+The package includes an analysis-ready BMI-SBP dataset. Its standard
+errors are already LDSC-calibrated. The corresponding LDSC intercept
+matrix is provided as `BMI_UKB_SBP_C`.
 
-``` r
+```r
 library(BRIVW)
 
-data("BMI_UKB_SBP")
-data("BMI_UKB_SBP_C")
-```
+data("BMI_UKB_SBP", package = "BRIVW")
+data("BMI_UKB_SBP_C", package = "BRIVW")
 
-`BMI_UKB_SBP` contains the harmonized and selected GWAS summary
-statistics, with standard errors already calibrated using LDSC.
-`BMI_UKB_SBP_C` contains the corresponding LDSC intercept matrix, whose
-diagonal elements are `c1` and `c2` and whose off-diagonal element is
-`c12`.
-
-The sampling-error correlation is calculated as
-
-``` r
+# The example standard errors are already LDSC-calibrated.
+# Use the exact two-sided IV-selection threshold.
+lambda <- qnorm(5e-5 / 2, lower.tail = FALSE)
 rho <- BMI_UKB_SBP_C[1, 2] /
-  sqrt(
-    BMI_UKB_SBP_C[1, 1] *
-    BMI_UKB_SBP_C[2, 2]
-  )
+  sqrt(BMI_UKB_SBP_C[1, 1] * BMI_UKB_SBP_C[2, 2])
 
-rho
-```
-
-BRIVW estimation and the BMEI-C test are then performed jointly:
-
-``` r
 fit <- brivw(
   gamma_hat = BMI_UKB_SBP$gamma_hat,
   gamma_se = BMI_UKB_SBP$gamma_se,
@@ -89,18 +80,29 @@ fit <- brivw(
   Gamma_se = BMI_UKB_SBP$Gamma_se,
   rho = rho,
   eta = 0.5,
-  lambda = 4.06,
+  lambda = lambda,
   sig.level = 0.95
 )
 
 fit
 ```
 
-The output contains the BRIVW point estimate, standard error, confidence
-interval, causal-effect P-value, number of SNPs, and BMEI-C P-value.
+The output includes the causal-effect estimate (`estimate`), its standard
+error (`std_error`), confidence limits (`ci_lower` and `ci_upper`),
+causal-effect P-value (`p_value`), number of SNPs (`n_snp`), and
+BMEI P-value (`bmei_p_value`). A nonsignificant BMEI result does not
+establish that all pleiotropy assumptions hold.
+
+To run this example directly from the local package source, open the
+package project in RStudio and run:
+
+```r
+source("examples/BMI_SBP.R")
+```
 
 ## Reference
 
-Liu X, Su Y, Zeng C, et al. Simultaneously accounting for the winner’s
+Liu X, Su Y, Zeng C, et al. Simultaneously accounting for the winner's
 curse and sample structure in Mendelian randomization: bivariate
 rerandomized inverse variance weighted estimator.
+Preprint: https://arxiv.org/abs/2603.06078.

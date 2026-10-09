@@ -2,7 +2,7 @@
 % Please edit documentation in R/brivw.R
 \name{brivw}
 \alias{brivw}
-\title{BRIVW Estimation and BMEI-C Test}
+\title{BRIVW Estimation and BMEI Test}
 \usage{
 brivw(
   gamma_hat,
@@ -60,7 +60,8 @@ A one-row data frame containing:
 \item{\code{ci_upper}}{Upper confidence limit.}
 \item{\code{p_value}}{Two-sided P-value for the BRIVW causal effect.}
 \item{\code{n_snp}}{Number of SNPs included in the analysis.}
-\item{\code{bmei_p_value}}{P-value from the combined BMEI-C test.}
+\item{\code{bmei_p_value}}{Two-sided P-value from the BMEI test
+under exposure-increasing allele coding.}
 \item{\code{rho}}{Correlation parameter used in the analysis.}
 \item{\code{eta}}{Randomization standard deviation.}
 \item{\code{lambda}}{Randomized IV-selection threshold.}
@@ -69,9 +70,9 @@ A one-row data frame containing:
 }
 \description{
 Performs bivariate rerandomized inverse variance weighted (BRIVW)
-estimation for the causal effect and the accompanying combined
-bivariate modified Egger intercept (BMEI-C) test for detecting
-directional pleiotropy.
+estimation for the causal effect and the accompanying BMEI test
+to assess departures from the balanced pleiotropy and InSIDE
+conditions.
 
 The input summary statistics are assumed to have already undergone
 allele harmonization, randomized instrument selection, and LD pruning.
@@ -110,29 +111,34 @@ BRIVW applies Rao--Blackwell correction to both the exposure and
 outcome GWAS associations and accounts for the covariance induced by
 sample structure.
 
-The BMEI-C test combines two BMEI statistics obtained under two
-allele orientations. The first uses the input harmonized coding.
-The second simultaneously flips the exposure and outcome associations
-for SNPs with negative estimated exposure associations, so that all
-exposure associations are oriented in the positive direction.
-The combined P-value is based on the maximum absolute Z statistic
-while accounting for the estimated correlation between the two
-statistics.
+The BMEI test uses exposure-increasing allele coding (all-positive
+coding). After harmonization and randomized IV selection, both
+exposure and outcome association estimates are reversed for SNPs
+with negative values of \code{gamma_hat}. Recoding is based on the
+original exposure association estimates, before Rao--Blackwellization.
+The two-sided P-value is calculated using the standard normal
+distribution.
 }
 \examples{
-\dontrun{
+data("BMI_UKB_SBP", package = "BRIVW")
+data("BMI_UKB_SBP_C", package = "BRIVW")
+
+# The example standard errors are already LDSC-calibrated.
+# Use the exact two-sided IV-selection threshold.
+lambda <- qnorm(5e-5 / 2, lower.tail = FALSE)
+rho <- BMI_UKB_SBP_C[1, 2] /
+  sqrt(BMI_UKB_SBP_C[1, 1] * BMI_UKB_SBP_C[2, 2])
+
 fit <- brivw(
-  gamma_hat = dat$beta.exposure,
-  gamma_se  = dat$se.exposure,
-  Gamma_hat = dat$beta.outcome,
-  Gamma_se  = dat$se.outcome,
-  rho = 0.10,
+  gamma_hat = BMI_UKB_SBP$gamma_hat,
+  gamma_se = BMI_UKB_SBP$gamma_se,
+  Gamma_hat = BMI_UKB_SBP$Gamma_hat,
+  Gamma_se = BMI_UKB_SBP$Gamma_se,
+  rho = rho,
   eta = 0.5,
-  lambda = 4.06,
+  lambda = lambda,
   sig.level = 0.95
 )
 
 fit
-}
-
 }
